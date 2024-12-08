@@ -15,58 +15,58 @@ def process_main_page():
         page_title="Car Price Prediction",
         page_icon=Image.open('data/car.jpg'),
     )
-    page = st.sidebar.selectbox("Выберите страницу", ["Анализ данных", "Предсказание стоимости"])
+    page = st.sidebar.selectbox("Select a page", ["Data Analysis", "Price Prediction"])
 
-    if page == "Анализ данных":
+    if page == "Data Analysis":
         show_main_page()
-    elif page == "Предсказание стоимости":
+    elif page == "Price Prediction":
         show_prediction_page()
 
 
 def show_main_page():
     st.write(
         """
-        # Это страница анализа данных
-        Используйте боковую панель, чтобы перейти к вводу данных и предсказаниям.
+        # This is the data analysis page
+        Use the sidebar to navigate to data input and predictions.
         """
     )
 
-    st.write("### Исходный датасет")
+    st.write("### Original Dataset")
     df = pd.read_csv('data/data.csv')
     st.write(df.head(5))
 
-    with st.expander("Описание данных", expanded=False):
+    with st.expander("Data Description", expanded=False):
         st.markdown(
             """
-            **Целевая переменная**
-            - `selling_price`: цена продажи, числовая
+            **Target Variable**
+            - `selling_price`: selling price, numeric
 
-            **Признаки**
-            - **`name`** *(string)*: модель автомобиля
-            - **`year`** *(numeric, int)*: год выпуска с завода-изготовителя
-            - **`km_driven`** *(numeric, int)*: пробег на дату продажи
-            - **`fuel`** *(categorical: _Diesel_, _Petrol_, _CNG_, _LPG_, _electric_)*: тип топлива
-            - **`seller_type`** *(categorical: _Individual_, _Dealer_, _Trustmark Dealer_)*: продавец
-            - **`transmission`** *(categorical: _Manual_, _Automatic_)*: тип трансмиссии
-            - **`owner`** *(categorical: _First Owner_, _Second Owner_, _Third Owner_, _Fourth & Above Owner_)*: какой по счёту хозяин?
-            - **`mileage`** *(string, по смыслу числовой)*: пробег, требует предобработки
-            - **`engine`** *(string, по смыслу числовой)*: рабочий объем двигателя, требует предобработки
-            - **`max_power`** *(string, по смыслу числовой)*: пиковая мощность двигателя, требует предобработки
-            - **`torque`** *(string, по смыслу числовой, а то и 2)*: крутящий момент, требует предобработки
-            - **`seats`** *(numeric, float; по смыслу categorical, int)*: количество мест
+            **Features**
+            - **`name`** *(string)*: car model
+            - **`year`** *(numeric, int)*: year of manufacture
+            - **`km_driven`** *(numeric, int)*: mileage at the time of sale
+            - **`fuel`** *(categorical: _Diesel_, _Petrol_, _CNG_, _LPG_, _electric_)*: fuel type
+            - **`seller_type`** *(categorical: _Individual_, _Dealer_, _Trustmark Dealer_)*: seller type
+            - **`transmission`** *(categorical: _Manual_, _Automatic_)*: transmission type
+            - **`owner`** *(categorical: _First Owner_, _Second Owner_, _Third Owner_, _Fourth & Above Owner_)*: which owner is it?
+            - **`mileage`** *(string, numerically interpreted)*: mileage, requires preprocessing
+            - **`engine`** *(string, numerically interpreted)*: engine volume, requires preprocessing
+            - **`max_power`** *(string, numerically interpreted)*: peak engine power, requires preprocessing
+            - **`torque`** *(string, numerically interpreted, possibly two values)*: torque, requires preprocessing
+            - **`seats`** *(numeric, float; logically categorical, int)*: number of seats
             """
         )
 
-    with st.expander("Проверка на NaN", expanded=True):
+    with st.expander("Check for NaN", expanded=True):
         nan_summary = df.isnull().sum()
         if nan_summary.sum() == 0:
-            st.success("В данных нет пропущенных значений!")
+            st.success("No missing values in the data!")
         else:
-            st.warning("В данных есть пропущенные значения!")
-            st.write("Количество пропущенных значений по столбцам:")
+            st.warning("There are missing values in the data!")
+            st.write("Number of missing values per column:")
             st.write(nan_summary[nan_summary > 0])
 
-    st.write("### Датасет, после некоторых преобразований")
+    st.write("### Dataset after some transformations")
     st.write("name -> Company, Model; Mileage transform; Engine transform; Max_power transform;")
     df_v1 = pd.read_csv('data/data_preproc_v1.csv')
     st.write(df_v1.head(5))
@@ -75,7 +75,7 @@ def show_main_page():
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("### Корреляционная матрица числовых признаков")
+            st.write("### Correlation Matrix of Numerical Features")
             corr_matrix = df_v1.select_dtypes(include=['int64', 'float64']).corr()
             f, ax = plt.subplots(figsize=(6, 6))
             sns.heatmap(
@@ -89,120 +89,118 @@ def show_main_page():
             )
             st.pyplot(f)
             st.write(
-                "Из диаграммы видно, что больше всего коррелируют переменные `engine` и `max_power`, "
-                "что логично, так как пиковая мощность двигателя напрямую зависит от его объема."
+                "From the chart, it is clear that `engine` and `max_power` are most correlated, "
+                "which makes sense since peak engine power is directly dependent on engine volume."
             )
 
-            st.write("### Зависимость цены продажи от пробега")
+            st.write("### Dependence of selling price on mileage")
             plt.figure(figsize=(8, 6))
             sns.scatterplot(x='km_driven', y='selling_price', data=df_v1)
-            plt.title('Зависимость цены продажи от пробега автомобиля')
-            plt.xlabel('Пробег (km)')
-            plt.ylabel('Цена продажи (selling_price)')
+            plt.title('Dependence of Selling Price on Mileage')
+            plt.xlabel('Mileage (km)')
+            plt.ylabel('Selling Price (selling_price)')
             st.pyplot(plt)
-            st.write("С увеличением пробега цена продажи автомобиля обычно снижается")
+            st.write("As mileage increases, the selling price typically decreases")
 
-
-
-            st.write("### Отношение видов топлива")
+            st.write("### Fuel Type Distribution")
             types_fuel = df_v1["fuel"].unique()
             x_fuel = df_v1["fuel"].value_counts()
             f, ax = plt.subplots(figsize=(5, 5))
             ax.pie(x_fuel, labels=types_fuel, autopct="%1.1f%%", startangle=90)
-            ax.set_title("Отношение видов топлива")
+            ax.set_title("Fuel Type Distribution")
             st.pyplot(f)
 
         with col2:
-            st.write("### Отношение видов продавцов")
+            st.write("### Seller Type Distribution")
             types = df_v1["seller_type"].unique()
             x = df_v1["seller_type"].value_counts()
             f, ax = plt.subplots(figsize=(5, 5))
             ax.pie(x, labels=types, autopct="%1.1f%%", startangle=90)
-            ax.set_title("Отношение видов продавцов")
+            ax.set_title("Seller Type Distribution")
             st.pyplot(f)
             st.write(
-                "Видно, что подержанные авто чаще продают индивидуальные лица"
+                "It is clear that used cars are most often sold by individual sellers"
             )
 
-            st.write("### Количество записей по компаниям")
+            st.write("### Record Count by Company")
             companies = df_v1["Company"].unique()
             count = df_v1["Company"].value_counts()
             f, ax = plt.subplots(figsize=(10, 5))
             sns.barplot(x=companies, y=count.values, ax=ax)
-            ax.set_xlabel("Название компании")
-            ax.set_ylabel("Количество")
+            ax.set_xlabel("Company Name")
+            ax.set_ylabel("Count")
             ax.set_xticklabels(companies, rotation=75)
             st.pyplot(f)
 
-            st.write("### Отношение видов трансмиссии")
+            st.write("### Transmission Type Distribution")
             types_transmission = df_v1["transmission"].unique()
             x_transmission = df_v1["transmission"].value_counts()
             f, ax = plt.subplots(figsize=(5, 5))
             ax.pie(x_transmission, labels=types_transmission, autopct="%1.1f%%", startangle=90)
-            ax.set_title("Отношение видов трансмиссии")
+            ax.set_title("Transmission Type Distribution")
             st.pyplot(f)
 
-            st.write("Большинство автомобилей имеют механическую трансмиссию, что составляет 87.1% от общего числа. Это может указывать на более широкое распространение механических коробок передач, особенно на вторичном рынке.")
+            st.write("Most cars have a manual transmission, which makes up 87.1% of the total. This may indicate a wider distribution of manual gearboxes, especially in the used car market.")
 
-        st.write("### Сравнение распределений цен для разных типов топлива")
+        st.write("### Comparison of Price Distributions for Different Fuel Types")
         plt.figure(figsize=(10, 5))
         sns.boxplot(x='fuel', y='selling_price', data=df_v1)
-        plt.title("Распределение цены продажи для разных типов топлива")
-        plt.xlabel("Тип топлива")
-        plt.ylabel("Цена продажи")
+        plt.title("Selling Price Distribution for Different Fuel Types")
+        plt.xlabel("Fuel Type")
+        plt.ylabel("Selling Price")
         st.pyplot(plt)
-        st.write("Из графика видно, что автомобили с дизельным топливом имеют широкий диапазон цен. Большинство автомобилей находится в диапазоне цен около 0.2")
+        st.write("From the chart, it is evident that diesel cars have a wide range of prices. Most cars fall in the price range around 0.2")
 
-        # 2. Сравнение распределений цен для различных типов трансмиссий
-        st.write("### Сравнение распределений цен для разных типов трансмиссий")
+        # 2. Comparison of Price Distributions for Different Transmission Types
+        st.write("### Comparison of Price Distributions for Different Transmission Types")
         plt.figure(figsize=(10, 5))
         sns.boxplot(x='transmission', y='selling_price', data=df_v1)
-        plt.title("Распределение цены продажи для разных типов трансмиссий")
-        plt.xlabel("Тип трансмиссии")
-        plt.ylabel("Цена продажи")
+        plt.title("Selling Price Distribution for Different Transmission Types")
+        plt.xlabel("Transmission Type")
+        plt.ylabel("Selling Price")
         st.pyplot(plt)
-        st.write("По графику видно, что машины с автоматической коробкой передач продаются значительно дороже, чем машины с механикой")
+        st.write("From the graph, it is evident that cars with automatic transmissions are sold significantly more expensive than manual ones")
 
-    with st.expander("Гипотеза", expanded=True):
-        st.write("### Гипотеза: Бензиновые автомобили с автоматической коробкой передач, продаваемые дилером, имеют более высокую цену, чем те, которые продаются частными лицами")
+    with st.expander("Hypothesis", expanded=True):
+        st.write("### Hypothesis: Petrol cars with automatic transmission, sold by dealers, have a higher price than those sold by individuals")
 
         group_dealer = df_v1[(df_v1['fuel'] == 'Petrol') & (df_v1['transmission'] == 'Automatic') & (df_v1['seller_type'] == 'Dealer')][
             'selling_price']
         group_individual = df_v1[(df_v1['fuel'] == 'Petrol') & (df_v1['transmission'] == 'Automatic') & (df_v1['seller_type'] == 'Individual')][
             'selling_price']
 
-        # 2. Сравнение средних значений цены
-        st.write("#### Сравнение средней цены продажи для двух групп: дилер vs частное лицо")
+        # 2. Comparison of Mean Prices
+        st.write("#### Comparison of Average Selling Prices for Two Groups: Dealer vs Individual")
         plt.figure(figsize=(10, 5))
         sns.boxplot(x='seller_type', y='selling_price',
                     data=df_v1[(df_v1['fuel'] == 'Petrol') & (df_v1['transmission'] == 'Automatic')])
-        plt.title("Распределение цен продажи для бензиновых автомобилей с автоматической коробкой передач")
-        plt.xlabel("Тип продавца")
-        plt.ylabel("Цена продажи")
+        plt.title("Selling Price Distribution for Petrol Cars with Automatic Transmission")
+        plt.xlabel("Seller Type")
+        plt.ylabel("Selling Price")
         st.pyplot(plt)
 
         t_stat, p_value = stats.ttest_ind(group_dealer, group_individual, equal_var=False)
 
-        st.write(f"t-тест: t-статистика = {t_stat:.2f}, p-значение = {p_value:.4f}")
+        st.write(f"t-test: t-statistic = {t_stat:.2f}, p-value = {p_value:.4f}")
 
-        # 4. Интерпретация результатов
+        # 4. Interpretation of Results
         if p_value < 0.05:
             st.success(
-                "Гипотеза подтверждается: бензиновые автомобили с автоматической коробкой передач, продаваемые дилером, имеют более высокую цену, чем те, которые продаются частными лицами.")
+                "The hypothesis is confirmed: petrol cars with automatic transmission, sold by dealers, have a higher price than those sold by individuals.")
         else:
-            st.warning("Гипотеза опровергается: статистически значимых различий в цене продажи между группами нет.")
+            st.warning("The hypothesis is refuted: there is no statistically significant difference in selling prices between the groups.")
 
-
-    st.write("### Датасет для обучения модели")
+    st.write("### Dataset for Model Training")
     st.write("[owner, fuel, seller_type, transmission, name] -> to digits\n")
     df_v2 = pd.read_csv('data/data_preproc_v2.csv')
     st.write(df_v2.head(5))
 
+
 def show_prediction_page():
-    st.header("Введите параметры автомобиля")
+    st.header("Enter Car Parameters")
     user_input_df = main_page_input_features()
 
-    if st.button("Сделать предсказание"):
+    if st.button("Make Prediction"):
         prediction = model_prediction(user_input_df)
         write_user_data(user_input_df)
         write_prediction(prediction)
@@ -262,12 +260,12 @@ def main_page_input_features():
 
 
 def write_user_data(df):
-    st.write("## Ваши данные")
+    st.write("## Your Data")
     st.write(df)
 
 
 def write_prediction(prediction):
-    st.write("## Предсказание")
+    st.write("## Prediction")
     st.write(prediction)
 
 
